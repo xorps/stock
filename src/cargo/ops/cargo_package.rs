@@ -17,6 +17,8 @@ use crate::sources::PathSource;
 use crate::util::errors::{CargoResult, CargoResultExt};
 use crate::util::paths;
 use crate::util::{self, internal, Config, FileLock};
+use crate::core::manifest::MANIFEST_FILENAME;
+use crate::ops::lockfile::LOCKFILE_FILENAME;
 
 pub struct PackageOpts<'cfg> {
     pub config: &'cfg Config,
@@ -72,7 +74,7 @@ pub fn package(ws: &Workspace<'_>, opts: &PackageOpts<'_>) -> CargoResult<Option
             .map(|file| file.strip_prefix(root).unwrap().to_path_buf())
             .collect();
         if include_lockfile(pkg) {
-            list.push("Cargo.lock".into());
+            list.push(MANIFEST_FILENAME.into());
         }
         if vcs_info.is_some() {
             list.push(Path::new(VCS_INFO_FILE).to_path_buf());
@@ -192,15 +194,16 @@ fn check_repo_state(
             if let Ok(status) = repo.status_file(path) {
                 if (status & git2::Status::IGNORED).is_empty() {
                     debug!(
-                        "found (git) Cargo.toml at {:?} in workdir {:?}",
-                        path, workdir
+                        "found (git) {} at {:?} in workdir {:?}",
+                        MANIFEST_FILENAME, path, workdir
                     );
                     return git(p, src_files, &repo, allow_dirty);
                 }
             }
             config.shell().verbose(|shell| {
                 shell.warn(format!(
-                    "No (git) Cargo.toml found at `{}` in workdir `{}`",
+                    "No (git) {} found at `{}` in workdir `{}`",
+                    MANIFEST_FILENAME,
                     path.display(),
                     workdir.display()
                 ))
@@ -340,8 +343,8 @@ fn tar(
             .chain_err(|| format!("could not learn metadata for: `{}`", relative))?;
         header.set_metadata(&metadata);
 
-        if relative == "Cargo.toml" {
-            let orig = Path::new(&path).with_file_name("Cargo.toml.orig");
+        if relative == MANIFEST_FILENAME {
+            let orig = Path::new(&path).with_file_name(format!("{}.orig", MANIFEST_FILENAME));
             header.set_path(&orig)?;
             header.set_cksum();
             ar.append(&header, &mut file)
@@ -393,12 +396,13 @@ fn tar(
     }
 
     if include_lockfile(pkg) {
-        let toml = paths::read(&ws.root().join("Cargo.lock"))?;
+        let toml = paths::read(&ws.root().join(LOCKFILE_FILENAME))?;
         let path = format!(
-            "{}-{}{}Cargo.lock",
+            "{}-{}{}{}",
             pkg.name(),
             pkg.version(),
-            path::MAIN_SEPARATOR
+            path::MAIN_SEPARATOR,
+            LOCKFILE_FILENAME
         );
         let mut header = Header::new_ustar();
         header.set_path(&path)?;
@@ -407,7 +411,7 @@ fn tar(
         header.set_size(toml.len() as u64);
         header.set_cksum();
         ar.append(&header, toml.as_bytes())
-            .chain_err(|| internal("could not archive source file `Cargo.lock`"))?;
+            .chain_err(|| internal(format!("could not archive source file `{}`", LOCKFILE_FILENAME)))?;
     }
 
     let encoder = ar.into_inner()?;

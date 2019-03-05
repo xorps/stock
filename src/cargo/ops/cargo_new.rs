@@ -12,6 +12,8 @@ use crate::core::{compiler, Workspace};
 use crate::util::errors::{CargoResult, CargoResultExt};
 use crate::util::{existing_vcs_repo, internal, FossilRepo, GitRepo, HgRepo, PijulRepo};
 use crate::util::{paths, validate_package_name, Config};
+use crate::core::manifest::MANIFEST_FILENAME;
+use crate::ops::lockfile::LOCKFILE_FILENAME;
 
 use toml;
 
@@ -260,9 +262,10 @@ fn detect_source_paths_and_types(
 multiple possible binary sources found:
   {}
   {}
-cannot automatically generate Cargo.toml as the main target would be ambiguous",
+cannot automatically generate {} as the main target would be ambiguous",
                     &x.relative_path,
-                    &i.relative_path
+                    &i.relative_path,
+                    MANIFEST_FILENAME
                 );
             }
             duplicates_checker.insert(i.target_name.as_ref(), i);
@@ -335,8 +338,8 @@ pub fn new(opts: &NewOptions, config: &Config) -> CargoResult<()> {
 pub fn init(opts: &NewOptions, config: &Config) -> CargoResult<()> {
     let path = &opts.path;
 
-    if fs::metadata(&path.join("Cargo.toml")).is_ok() {
-        failure::bail!("`cargo init` cannot be run on existing Cargo packages")
+    if fs::metadata(&path.join(MANIFEST_FILENAME)).is_ok() {
+        failure::bail!("`stock init` cannot be run on existing stock packages")
     }
 
     let name = get_name(path, opts)?;
@@ -545,7 +548,7 @@ fn mk(config: &Config, opts: &MkOptions<'_>) -> CargoResult<()> {
     ignore.push("/target", "^target/");
     ignore.push("**/*.rs.bk", "glob:*.rs.bk\n");
     if !opts.bin {
-        ignore.push("Cargo.lock", "glob:Cargo.lock");
+        ignore.push(LOCKFILE_FILENAME, &format!("glob:{}", LOCKFILE_FILENAME));
     }
 
     let vcs = opts.version_control.unwrap_or_else(|| {
@@ -602,7 +605,7 @@ path = {}
     // Create `Cargo.toml` file with necessary `[lib]` and `[[bin]]` sections, if needed.
 
     paths::write(
-        &path.join("Cargo.toml"),
+        &path.join(MANIFEST_FILENAME),
         format!(
             r#"[package]
 name = "{}"
@@ -665,7 +668,7 @@ mod tests {
         }
     }
 
-    if let Err(e) = Workspace::new(&path.join("Cargo.toml"), config) {
+    if let Err(e) = Workspace::new(&path.join(MANIFEST_FILENAME), config) {
         let msg = format!(
             "compiling this new crate may not work due to invalid \
              workspace configuration\n\n{}",

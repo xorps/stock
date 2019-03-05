@@ -1556,7 +1556,7 @@ where
     let mut stash: HashSet<PathBuf> = HashSet::new();
 
     for current in paths::ancestors(pwd) {
-        let possible = current.join(".cargo").join("config");
+        let possible = current.join(".stock").join("config");
         if fs::metadata(&possible).is_ok() {
             walk(&possible)?;
             stash.insert(possible);

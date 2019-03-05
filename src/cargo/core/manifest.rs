@@ -17,6 +17,9 @@ use crate::util::errors::*;
 use crate::util::toml::TomlManifest;
 use crate::util::{short_hash, Config, Filesystem};
 
+pub const MANIFEST_FILENAME: &str = "stock.toml";
+pub const MANIFEST_PATH: &str = "Path to stock.toml";
+
 pub enum EitherManifest {
     Real(Manifest),
     Virtual(VirtualManifest),

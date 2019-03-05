@@ -157,7 +157,7 @@ impl<'cfg> Source for GitSource<'cfg> {
         let lock =
             self.config
                 .git_path()
-                .open_rw(".cargo-lock-git", self.config, "the git checkouts")?;
+                .open_rw(".stock-lock-git", self.config, "the git checkouts")?;
 
         let db_path = lock.parent().join("db").join(&self.ident);
 

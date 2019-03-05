@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::util::errors::CargoResult;
 use crate::util::{Config, ProcessBuilder};
+use crate::core::manifest::MANIFEST_FILENAME;
 
 const DIAGNOSICS_SERVER_VAR: &str = "__CARGO_FIX_DIAGNOSTICS_SERVER";
 const PLEASE_REPORT_THIS_BUG: &str =
@@ -170,14 +171,15 @@ cannot prepare for the {} edition when it is enabled, so cargo cannot
 automatically fix errors in `{}`
 
 To prepare for the {0} edition you should first remove `edition = '{0}'` from
-your `Cargo.toml` and then rerun this command. Once all warnings have been fixed
-then you can re-enable the `edition` key in `Cargo.toml`. For some more
+your `{manifest}` and then rerun this command. Once all warnings have been fixed
+then you can re-enable the `edition` key in `{manifest}`. For some more
 information about transitioning to the {0} edition see:
 
   https://doc.rust-lang.org/edition-guide/editions/transitioning-an-existing-project-to-a-new-edition.html
 ",
                     edition,
                     file,
+                    manifest = MANIFEST_FILENAME
                 );
                 self.config.shell().error(&msg)?;
                 Ok(())
@@ -197,7 +199,7 @@ cannot migrate to the idioms of the {} edition for `{}`
 because it is compiled {}, which doesn't match {0}
 
 consider migrating to the {0} edition by adding `edition = '{0}'` to
-`Cargo.toml` and then rerunning this command; a more detailed transition
+`{manifest}` and then rerunning this command; a more detailed transition
 guide can be found at
 
   https://doc.rust-lang.org/edition-guide/editions/transitioning-an-existing-project-to-a-new-edition.html
@@ -208,6 +210,7 @@ guide can be found at
                         Some(s) => format!("with the {} edition", s),
                         None => "without an edition".to_string(),
                     },
+                    manifest = MANIFEST_FILENAME
                 ))?;
                 Ok(())
             }

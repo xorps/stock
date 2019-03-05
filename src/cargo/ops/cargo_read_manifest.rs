@@ -10,6 +10,7 @@ use crate::util::errors::CargoResult;
 use crate::util::important_paths::find_project_manifest_exact;
 use crate::util::toml::read_manifest;
 use crate::util::{self, Config};
+use crate::core::manifest::MANIFEST_FILENAME;
 
 pub fn read_package(
     path: &Path,
@@ -89,7 +90,8 @@ pub fn read_packages(
         match errors.pop() {
             Some(err) => Err(err),
             None => Err(failure::format_err!(
-                "Could not find Cargo.toml in `{}`",
+                "Could not find {} in `{}`",
+                MANIFEST_FILENAME,
                 path.display()
             )),
         }
@@ -125,7 +127,7 @@ fn walk(path: &Path, callback: &mut dyn FnMut(&Path) -> CargoResult<bool>) -> Ca
 }
 
 fn has_manifest(path: &Path) -> bool {
-    find_project_manifest_exact(path, "Cargo.toml").is_ok()
+    find_project_manifest_exact(path, MANIFEST_FILENAME).is_ok()
 }
 
 fn read_nested_packages(
@@ -140,7 +142,7 @@ fn read_nested_packages(
         return Ok(());
     }
 
-    let manifest_path = find_project_manifest_exact(path, "Cargo.toml")?;
+    let manifest_path = find_project_manifest_exact(path, MANIFEST_FILENAME)?;
 
     let (manifest, nested) = match read_manifest(&manifest_path, source_id, config) {
         Err(err) => {

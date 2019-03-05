@@ -9,11 +9,12 @@ use crate::ops;
 use crate::sources::PathSource;
 use crate::util::errors::{CargoResult, CargoResultExt};
 use crate::util::profile;
+use crate::core::manifest::MANIFEST_FILENAME;
 
 const UNUSED_PATCH_WARNING: &str = "\
 Check that the patched package version and available features are compatible
 with the dependency requirements. If the patch has a different version from
-what is locked in the Cargo.lock file, run `cargo update` to use the new
+what is locked in the stock.lock file, run `stock update` to use the new
 version. This may also occur with an optional dependency that is not enabled.";
 
 /// Resolves all dependencies for the workspace using the previous
@@ -433,7 +434,7 @@ fn register_previous_locks(
             return None;
         }
         if let Ok(path) = id.url().to_file_path() {
-            if let Ok(pkg) = ws.load(&path.join("Cargo.toml")) {
+            if let Ok(pkg) = ws.load(&path.join(MANIFEST_FILENAME)) {
                 return Some(pkg);
             }
         }

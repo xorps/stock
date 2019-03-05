@@ -12,6 +12,7 @@ use crate::sources::PathSource;
 use crate::util::errors::{CargoResult, CargoResultExt};
 use crate::util::paths;
 use crate::util::{Config, Sha256};
+use crate::core::manifest::MANIFEST_FILENAME;
 
 pub struct DirectorySource<'cfg> {
     source_id: SourceId,
@@ -110,7 +111,7 @@ impl<'cfg> Source for DirectorySource<'cfg> {
             // flexible with the contents of vendor directories but has the
             // downside of accidentally misconfigured vendor directories
             // silently returning less crates.
-            if !path.join("Cargo.toml").exists() {
+            if !path.join(MANIFEST_FILENAME).exists() {
                 continue;
             }
 

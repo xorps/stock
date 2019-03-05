@@ -8,13 +8,15 @@ use crate::util::errors::{CargoResult, CargoResultExt};
 use crate::util::toml as cargo_toml;
 use crate::util::Filesystem;
 
+pub const LOCKFILE_FILENAME: &str = "stock.lock";
+
 pub fn load_pkg_lockfile(ws: &Workspace<'_>) -> CargoResult<Option<Resolve>> {
-    if !ws.root().join("Cargo.lock").exists() {
+    if !ws.root().join(LOCKFILE_FILENAME).exists() {
         return Ok(None);
     }
 
     let root = Filesystem::new(ws.root().to_path_buf());
-    let mut f = root.open_ro("Cargo.lock", ws.config(), "Cargo.lock file")?;
+    let mut f = root.open_ro(LOCKFILE_FILENAME, ws.config(), &format!("{} file", LOCKFILE_FILENAME))?;
 
     let mut s = String::new();
     f.read_to_string(&mut s)
@@ -32,7 +34,7 @@ pub fn load_pkg_lockfile(ws: &Workspace<'_>) -> CargoResult<Option<Resolve>> {
 pub fn write_pkg_lockfile(ws: &Workspace<'_>, resolve: &Resolve) -> CargoResult<()> {
     // Load the original lock file if it exists.
     let ws_root = Filesystem::new(ws.root().to_path_buf());
-    let orig = ws_root.open_ro("Cargo.lock", ws.config(), "Cargo.lock file");
+    let orig = ws_root.open_ro(LOCKFILE_FILENAME, ws.config(), &format!("{} file", LOCKFILE_FILENAME));
     let orig = orig.and_then(|mut f| {
         let mut s = String::new();
         f.read_to_string(&mut s)?;
@@ -115,20 +117,20 @@ pub fn write_pkg_lockfile(ws: &Workspace<'_>, resolve: &Resolve) -> CargoResult<
         failure::bail!(
             "the lock file {} needs to be updated but {} was passed to \
              prevent this",
-            ws.root().to_path_buf().join("Cargo.lock").display(),
+            ws.root().to_path_buf().join(LOCKFILE_FILENAME).display(),
             flag
         );
     }
 
     // Ok, if that didn't work just write it out
     ws_root
-        .open_rw("Cargo.lock", ws.config(), "Cargo.lock file")
+        .open_rw(LOCKFILE_FILENAME, ws.config(), &format!("{} file", LOCKFILE_FILENAME))
         .and_then(|mut f| {
             f.file().set_len(0)?;
             f.write_all(out.as_bytes())?;
             Ok(())
         })
-        .chain_err(|| format!("failed to write {}", ws.root().join("Cargo.lock").display()))?;
+        .chain_err(|| format!("failed to write {}", ws.root().join(LOCKFILE_FILENAME).display()))?;
     Ok(())
 }
 

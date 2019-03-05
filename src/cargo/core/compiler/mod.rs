@@ -23,6 +23,7 @@ use same_file::is_same_file;
 use serde::Serialize;
 
 use crate::core::manifest::TargetSourcePath;
+use crate::core::manifest::MANIFEST_FILENAME;
 use crate::core::profiles::{Lto, Profile};
 use crate::core::{PackageId, Target};
 use crate::util::errors::{CargoResult, CargoResultExt, Internal, ProcessError};
@@ -949,10 +950,11 @@ fn build_deps_args<'a, 'cfg>(
                 "The package `{}` \
                  provides no linkable target. The compiler might raise an error while compiling \
                  `{}`. Consider adding 'dylib' or 'rlib' to key `crate-type` in `{}`'s \
-                 Cargo.toml. This warning might turn into a hard error in the future.",
+                 {}. This warning might turn into a hard error in the future.",
                 u.target.crate_name(),
                 unit.target.crate_name(),
-                u.target.crate_name()
+                u.target.crate_name(),
+                MANIFEST_FILENAME
             ))?;
         }
     }

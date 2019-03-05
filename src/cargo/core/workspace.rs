@@ -12,6 +12,7 @@ use crate::core::profiles::Profiles;
 use crate::core::registry::PackageRegistry;
 use crate::core::{Dependency, PackageIdSpec};
 use crate::core::{EitherManifest, Package, SourceId, VirtualManifest};
+use crate::core::manifest::MANIFEST_FILENAME;
 use crate::ops;
 use crate::sources::PathSource;
 use crate::util::errors::{CargoResult, CargoResultExt, ManifestError};
@@ -343,7 +344,7 @@ impl<'cfg> Workspace<'cfg> {
                 .parent()
                 .unwrap()
                 .join(root_link)
-                .join("Cargo.toml");
+                .join(MANIFEST_FILENAME);
             debug!("find_root - pointer {}", path.display());
             Ok(paths::normalize_path(&path))
         };
@@ -367,7 +368,7 @@ impl<'cfg> Workspace<'cfg> {
                 break;
             }
 
-            let ances_manifest_path = path.join("Cargo.toml");
+            let ances_manifest_path = path.join(MANIFEST_FILENAME);
             debug!("find_root - trying {}", ances_manifest_path.display());
             if ances_manifest_path.exists() {
                 match *self.packages.load(&ances_manifest_path)?.workspace_config() {
@@ -441,12 +442,12 @@ impl<'cfg> Workspace<'cfg> {
         }
 
         for path in members_paths {
-            self.find_path_deps(&path.join("Cargo.toml"), &root_manifest_path, false)?;
+            self.find_path_deps(&path.join(MANIFEST_FILENAME), &root_manifest_path, false)?;
         }
 
         if let Some(default) = default_members_paths {
             for path in default {
-                let manifest_path = paths::normalize_path(&path.join("Cargo.toml"));
+                let manifest_path = paths::normalize_path(&path.join(MANIFEST_FILENAME));
                 if !self.members.contains(&manifest_path) {
                     failure::bail!(
                         "package `{}` is listed in workspace’s default-members \
@@ -505,7 +506,7 @@ impl<'cfg> Workspace<'cfg> {
                 .map(|d| d.source_id())
                 .filter(|d| d.is_path())
                 .filter_map(|d| d.url().to_file_path().ok())
-                .map(|p| p.join("Cargo.toml"))
+                .map(|p| p.join(MANIFEST_FILENAME))
                 .collect::<Vec<_>>()
         };
         for candidate in candidates {
@@ -755,7 +756,7 @@ impl<'cfg> Workspace<'cfg> {
                 MaybePackage::Package(pkg) => pkg.manifest().warnings().warnings(),
                 MaybePackage::Virtual(vm) => vm.warnings().warnings(),
             };
-            let path = path.join("Cargo.toml");
+            let path = path.join(MANIFEST_FILENAME);
             for warning in warnings {
                 if warning.is_critical {
                     let err = failure::format_err!("{}", warning.message);

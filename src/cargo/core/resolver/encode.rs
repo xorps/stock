@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::core::{Dependency, Package, PackageId, SourceId, Workspace};
 use crate::util::errors::{CargoResult, CargoResultExt};
 use crate::util::{internal, Graph};
+use crate::core::manifest::MANIFEST_FILENAME;
 
 use super::Resolve;
 
@@ -230,7 +231,7 @@ fn build_path_deps(ws: &Workspace<'_>) -> HashMap<String, SourceId> {
             return;
         }
         let path = match id.url().to_file_path() {
-            Ok(p) => p.join("Cargo.toml"),
+            Ok(p) => p.join(MANIFEST_FILENAME),
             Err(_) => return,
         };
         let pkg = match ws.load(&path) {

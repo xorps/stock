@@ -1,8 +1,8 @@
-# Cargo
+# Stock
 
-Cargo downloads your Rust project’s dependencies and compiles your project.
+Stock is a fork of cargo.
 
-Learn more at https://doc.rust-lang.org/cargo/
+Stock downloads your C/C++ project’s dependencies and compiles your project.
 
 ## Code Status
 
@@ -11,10 +11,9 @@ Learn more at https://doc.rust-lang.org/cargo/
 
 Code documentation: https://docs.rs/cargo/
 
-## Installing Cargo
+## Installing Stock
 
-Cargo is distributed by default with Rust, so if you've got `rustc` installed
-locally you probably also have `cargo` installed locally.
+TODO
 
 ## Compiling from Source
 
@@ -29,8 +28,8 @@ Cargo requires the following tools and packages to build:
 First, you'll want to check out this repository
 
 ```
-git clone https://github.com/rust-lang/cargo
-cd cargo
+git clone https://github.com/xorps/stock
+cd stock
 ```
 
 With `cargo` already installed, you can simply run:
@@ -39,10 +38,10 @@ With `cargo` already installed, you can simply run:
 cargo build --release
 ```
 
-## Adding new subcommands to Cargo
+## Adding new subcommands to Stock
 
-Cargo is designed to be extensible with new subcommands without having to modify
-Cargo itself. See [the Wiki page][third-party-subcommands] for more details and
+Stock is designed to be extensible with new subcommands without having to modify
+Stock itself. See [the Wiki page][third-party-subcommands] for more details and
 a list of known community-developed subcommands.
 
 [third-party-subcommands]: https://github.com/rust-lang/cargo/wiki/Third-party-cargo-subcommands

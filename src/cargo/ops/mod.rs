@@ -43,6 +43,6 @@ mod cargo_test;
 mod cargo_uninstall;
 mod common_for_install_and_uninstall;
 mod fix;
-mod lockfile;
+pub mod lockfile;
 mod registry;
 mod resolve;

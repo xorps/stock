@@ -14,6 +14,8 @@ use crate::ops;
 use crate::util::paths;
 use crate::util::Config;
 use crate::util::{internal, CargoResult};
+use crate::core::manifest::MANIFEST_FILENAME;
+use crate::ops::lockfile::LOCKFILE_FILENAME;
 
 pub struct PathSource<'cfg> {
     source_id: SourceId,
@@ -80,7 +82,7 @@ impl<'cfg> PathSource<'cfg> {
         } else if self.recursive {
             ops::read_packages(&self.path, self.source_id, self.config)
         } else {
-            let path = self.path.join("Cargo.toml");
+            let path = self.path.join(MANIFEST_FILENAME);
             let (pkg, _) = ops::read_package(&path, self.source_id, self.config)?;
             Ok(vec![pkg])
         }
@@ -273,7 +275,7 @@ impl<'cfg> PathSource<'cfg> {
         // we're part of that repository.
         let mut cur = root;
         loop {
-            if cur.join("Cargo.toml").is_file() {
+            if cur.join(MANIFEST_FILENAME).is_file() {
                 // If we find a Git repository next to this `Cargo.toml`, we still
                 // check to see if we are indeed part of the index. If not, then
                 // this is likely an unrelated Git repo, so keep going.
@@ -282,7 +284,7 @@ impl<'cfg> PathSource<'cfg> {
                         Ok(index) => index,
                         Err(err) => return Some(Err(err.into())),
                     };
-                    let path = root.strip_prefix(cur).unwrap().join("Cargo.toml");
+                    let path = root.strip_prefix(cur).unwrap().join(MANIFEST_FILENAME);
                     if index.get_path(&path, 0).is_some() {
                         return Some(self.list_files_git(pkg, &repo, filter));
                     }
@@ -354,12 +356,12 @@ impl<'cfg> PathSource<'cfg> {
                 // Filter out `Cargo.lock` and `target` always; we don't want to
                 // package a lock file no one will ever read and we also avoid
                 // build artifacts.
-                Some("Cargo.lock") | Some("target") => continue,
+                Some(LOCKFILE_FILENAME) | Some("target") => continue,
 
                 // Keep track of all sub-packages found and also strip out all
                 // matches we've found so far. Note, though, that if we find
                 // our own `Cargo.toml`, we keep going.
-                Some("Cargo.toml") => {
+                Some(MANIFEST_FILENAME) => {
                     let path = file_path.parent().unwrap();
                     if path != pkg_path {
                         warn!("subpackage found: {}", path.display());
@@ -446,7 +448,7 @@ impl<'cfg> PathSource<'cfg> {
             return Ok(());
         }
         // Don't recurse into any sub-packages that we have.
-        if !is_root && fs::metadata(&path.join("Cargo.toml")).is_ok() {
+        if !is_root && fs::metadata(&path.join(MANIFEST_FILENAME)).is_ok() {
             return Ok(());
         }
 
@@ -466,7 +468,7 @@ impl<'cfg> PathSource<'cfg> {
             if is_root {
                 // Skip Cargo artifacts.
                 match name {
-                    Some("target") | Some("Cargo.lock") => continue,
+                    Some("target") | Some(LOCKFILE_FILENAME) => continue,
                     _ => {}
                 }
             }

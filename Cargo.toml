@@ -1,16 +1,16 @@
 [package]
-name = "cargo"
+name = "stock"
 version = "0.35.0"
 edition = "2018"
 authors = ["Yehuda Katz <wycats@gmail.com>",
            "Carl Lerche <me@carllerche.com>",
            "Alex Crichton <alex@alexcrichton.com>"]
 license = "MIT OR Apache-2.0"
-homepage = "https://crates.io"
-repository = "https://github.com/rust-lang/cargo"
-documentation = "https://docs.rs/cargo"
+homepage = "https://github.com/xorps/stock"
+repository = "https://github.com/xorps/stock"
+documentation = ""
 description = """
-Cargo, a package manager for Rust.
+stock, a package manager for C/C++
 """
 
 [lib]
@@ -102,7 +102,7 @@ bufstream = "0.1"
 proptest = "0.8.7"
 
 [[bin]]
-name = "cargo"
+name = "stock"
 test = false
 doc = false
 

@@ -6,7 +6,7 @@ pub fn cli() -> App {
     subcommand("read-manifest")
         .about(
             "\
-Print a JSON representation of a Cargo.toml manifest.
+Print a JSON representation of a stock manifest.
 
 Deprecated, use `cargo metadata --no-deps` instead.\
 ",

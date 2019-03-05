@@ -15,6 +15,7 @@ use crate::util::errors::{CargoResult, CargoResultExt};
 use crate::util::paths;
 use crate::util::Config;
 use crate::util::Filesystem;
+use crate::core::manifest::MANIFEST_FILENAME;
 
 struct Transaction {
     bins: Vec<PathBuf>,
@@ -155,11 +156,12 @@ fn install_one(
         if !src.path().is_dir() {
             failure::bail!(
                 "`{}` is not a directory. \
-                 --path must point to a directory containing a Cargo.toml file.",
-                src.path().display()
+                 --path must point to a directory containing a {} file.",
+                src.path().display(),
+                MANIFEST_FILENAME
             )
         }
-        if !src.path().join("Cargo.toml").exists() {
+        if !src.path().join(MANIFEST_FILENAME).exists() {
             if from_cwd {
                 failure::bail!(
                     "`{}` is not a crate root; specify a crate to \
@@ -169,9 +171,11 @@ fn install_one(
                 );
             } else {
                 failure::bail!(
-                    "`{}` does not contain a Cargo.toml file. \
-                     --path must point to a directory containing a Cargo.toml file.",
-                    src.path().display()
+                    "`{}` does not contain a {} file. \
+                     --path must point to a directory containing a {} file.",
+                    src.path().display(),
+                    MANIFEST_FILENAME,
+                    MANIFEST_FILENAME
                 )
             }
         }

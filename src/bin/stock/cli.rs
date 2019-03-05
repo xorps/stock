@@ -33,9 +33,9 @@ Available unstable (nightly-only) flags:
     -Z no-index-update  -- Do not update the registry, avoids a network request for benchmarking
     -Z offline          -- Offline mode that does not perform network requests
     -Z unstable-options -- Allow the usage of unstable options such as --registry
-    -Z config-profile   -- Read profiles from .cargo/config files
+    -Z config-profile   -- Read profiles from .stock/config files
 
-Run with 'cargo -Z [FLAG] [SUBCOMMAND]'"
+Run with 'stock -Z [FLAG] [SUBCOMMAND]'"
         );
         return Ok(());
     }
@@ -169,7 +169,7 @@ fn execute_subcommand(config: &mut Config, args: &ArgMatches<'_>) -> CliResult {
 }
 
 fn cli() -> App {
-    App::new("cargo")
+    App::new("stock")
         .settings(&[
             AppSettings::UnifiedHelpMessage,
             AppSettings::DeriveDisplayOrder,
@@ -179,7 +179,7 @@ fn cli() -> App {
         .about("")
         .template(
             "\
-Rust's package manager
+C/C++ package manager
 
 USAGE:
     {usage}
@@ -187,23 +187,23 @@ USAGE:
 OPTIONS:
 {unified}
 
-Some common cargo commands are (see all commands with --list):
+Some common stock commands are (see all commands with --list):
     build       Compile the current package
     check       Analyze the current package and report errors, but don't build object files
     clean       Remove the target directory
     doc         Build this package's and its dependencies' documentation
-    new         Create a new cargo package
-    init        Create a new cargo package in an existing directory
+    new         Create a new stock package
+    init        Create a new stock package in an existing directory
     run         Run a binary or example of the local package
     test        Run the tests
     bench       Run the benchmarks
-    update      Update dependencies listed in Cargo.lock
+    update      Update dependencies listed in stock.lock
     search      Search registry for crates
     publish     Package and upload this package to the registry
-    install     Install a Rust binary. Default location is $HOME/.cargo/bin
-    uninstall   Uninstall a Rust binary
+    install     Install a stock binary. Default location is $HOME/.stock/bin
+    uninstall   Uninstall a stock binary
 
-See 'cargo help <command>' for more information on a specific command.\n",
+See 'stock help <command>' for more information on a specific command.\n",
         )
         .arg(opt("version", "Print version info and exit").short("V"))
         .arg(opt("list", "List installed commands"))
@@ -227,11 +227,11 @@ See 'cargo help <command>' for more information on a specific command.\n",
                 .value_name("WHEN")
                 .global(true),
         )
-        .arg(opt("frozen", "Require Cargo.lock and cache are up to date").global(true))
-        .arg(opt("locked", "Require Cargo.lock is up to date").global(true))
+        .arg(opt("frozen", "Require stock.lock and cache are up to date").global(true))
+        .arg(opt("locked", "Require stock.lock is up to date").global(true))
         .arg(
             Arg::with_name("unstable-features")
-                .help("Unstable (nightly-only) flags to Cargo, see 'cargo -Z help' for details")
+                .help("Unstable (nightly-only) flags to Stock, see 'stock -Z help' for details")
                 .short("Z")
                 .value_name("FLAG")
                 .multiple(true)

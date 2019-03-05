@@ -20,6 +20,7 @@ use super::{
 };
 use crate::core::{compiler, Edition, Feature, Features, Target};
 use crate::util::errors::{CargoResult, CargoResultExt};
+use crate::core::manifest::MANIFEST_FILENAME;
 
 pub fn targets(
     features: &Features,
@@ -181,9 +182,10 @@ fn clean_lib(
             if edition == Edition::Edition2015 && legacy_path.exists() {
                 warnings.push(format!(
                     "path `{}` was erroneously implicitly accepted for library `{}`,\n\
-                     please rename the file to `src/lib.rs` or set lib.path in Cargo.toml",
+                     please rename the file to `src/lib.rs` or set lib.path in {}",
                     legacy_path.display(),
-                    lib.name()
+                    lib.name(),
+                    MANIFEST_FILENAME
                 ));
                 legacy_path
             } else {
@@ -299,9 +301,10 @@ fn clean_bins(
             if let Some(legacy_path) = legacy_bin_path(package_root, &bin.name(), has_lib) {
                 warnings.push(format!(
                     "path `{}` was erroneously implicitly accepted for binary `{}`,\n\
-                     please set bin.path in Cargo.toml",
+                     please set bin.path in {}",
                     legacy_path.display(),
-                    bin.name()
+                    bin.name(),
+                    MANIFEST_FILENAME
                 ));
                 Some(legacy_path)
             } else {
@@ -438,9 +441,10 @@ fn clean_benches(
             }
             legacy_warnings.push(format!(
                 "path `{}` was erroneously implicitly accepted for benchmark `{}`,\n\
-                 please set bench.path in Cargo.toml",
+                 please set bench.path in {}",
                 legacy_path.display(),
-                bench.name()
+                bench.name(),
+                MANIFEST_FILENAME
             ));
             Some(legacy_path)
         };
@@ -672,7 +676,7 @@ fn toml_targets_and_inferred(
                             }
                             warnings.push(format!(
                                 "\
-An explicit [[{section}]] section is specified in Cargo.toml which currently
+An explicit [[{section}]] section is specified in {manifest} which currently
 disables Cargo from automatically inferring other {target_kind_human} targets.
 This inference behavior will change in the Rust 2018 edition and the following
 files will be included as a {target_kind_human} target:
@@ -687,6 +691,7 @@ automatically infer them to be a target, such as in subfolders.
 For more information on this warning you can consult
 https://github.com/rust-lang/cargo/issues/5330",
                                 section = target_kind,
+                                manifest = MANIFEST_FILENAME,
                                 target_kind_human = target_kind_human,
                                 rem_targets_str = rem_targets_str,
                                 autodiscover_flag_name = autodiscover_flag_name,

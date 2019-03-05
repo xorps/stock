@@ -13,6 +13,7 @@ use crate::util::{
 };
 use crate::CargoResult;
 use clap::{self, SubCommand};
+use crate::core::manifest::{MANIFEST_FILENAME, MANIFEST_PATH};
 
 pub use crate::core::compiler::CompileMode;
 pub use crate::{CliError, CliResult, Config};
@@ -127,7 +128,7 @@ pub trait AppExt: Sized {
     }
 
     fn arg_manifest_path(self) -> Self {
-        self._arg(opt("manifest-path", "Path to Cargo.toml").value_name("PATH"))
+        self._arg(opt("manifest-path", MANIFEST_PATH).value_name("PATH"))
     }
 
     fn arg_message_format(self) -> Self {
@@ -253,8 +254,8 @@ pub trait ArgMatchesExt {
             // In general, we try to avoid normalizing paths in Cargo,
             // but in this particular case we need it to fix #3586.
             let path = paths::normalize_path(&path);
-            if !path.ends_with("Cargo.toml") {
-                failure::bail!("the manifest-path must be a path to a Cargo.toml file")
+            if !path.ends_with(MANIFEST_FILENAME) {
+                failure::bail!("the manifest-path must be a path to a {} file", MANIFEST_FILENAME)
             }
             if fs::metadata(&path).is_err() {
                 failure::bail!(
