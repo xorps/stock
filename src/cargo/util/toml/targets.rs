@@ -146,7 +146,7 @@ fn clean_lib(
     edition: Edition,
     warnings: &mut Vec<String>,
 ) -> CargoResult<Option<Target>> {
-    let inferred = inferred_lib(package_root);
+    let inferred = inferred_lib(package_root, "cpp");
     let lib = match toml_lib {
         Some(lib) => {
             if let Some(ref name) = lib.name {
@@ -250,7 +250,7 @@ fn clean_bins(
     errors: &mut Vec<String>,
     has_lib: bool,
 ) -> CargoResult<Vec<Target>> {
-    let inferred = inferred_bins(package_root, package_name);
+    let inferred = inferred_bins(package_root, package_name, "cpp");
 
     let bins = toml_targets_and_inferred(
         toml_bins,
@@ -324,18 +324,19 @@ fn clean_bins(
     return Ok(result);
 
     fn legacy_bin_path(package_root: &Path, name: &str, has_lib: bool) -> Option<PathBuf> {
+        let ext = "cpp";
         if !has_lib {
-            let path = package_root.join("src").join(format!("{}.rs", name));
+            let path = package_root.join("src").join(format!("{}.{}", name, ext));
             if path.exists() {
                 return Some(path);
             }
         }
-        let path = package_root.join("src").join("main.rs");
+        let path = package_root.join("src").join(format!("main.{}", ext));
         if path.exists() {
             return Some(path);
         }
 
-        let path = package_root.join("src").join("bin").join("main.rs");
+        let path = package_root.join("src").join("bin").join(format!("main.{}", ext));
         if path.exists() {
             return Some(path);
         }
@@ -352,7 +353,7 @@ fn clean_examples(
     warnings: &mut Vec<String>,
     errors: &mut Vec<String>,
 ) -> CargoResult<Vec<Target>> {
-    let inferred = infer_from_directory(&package_root.join("examples"));
+    let inferred = infer_from_directory(&package_root.join("examples"), "cpp");
 
     let targets = clean_targets(
         "example",
@@ -397,7 +398,7 @@ fn clean_tests(
     warnings: &mut Vec<String>,
     errors: &mut Vec<String>,
 ) -> CargoResult<Vec<Target>> {
-    let inferred = infer_from_directory(&package_root.join("tests"));
+    let inferred = infer_from_directory(&package_root.join("tests"), "cpp");
 
     let targets = clean_targets(
         "test",
@@ -449,7 +450,7 @@ fn clean_benches(
             Some(legacy_path)
         };
 
-        let inferred = infer_from_directory(&package_root.join("benches"));
+        let inferred = infer_from_directory(&package_root.join("benches"), "cpp");
 
         clean_targets_with_legacy_path(
             "benchmark",
@@ -558,8 +559,8 @@ fn clean_targets_with_legacy_path(
     Ok(result)
 }
 
-fn inferred_lib(package_root: &Path) -> Option<PathBuf> {
-    let lib = package_root.join("src").join("lib.rs");
+fn inferred_lib(package_root: &Path, ext: &str) -> Option<PathBuf> {
+    let lib = package_root.join("src").join(format!("lib.{}", ext));
     if fs::metadata(&lib).is_ok() {
         Some(lib)
     } else {
@@ -567,18 +568,18 @@ fn inferred_lib(package_root: &Path) -> Option<PathBuf> {
     }
 }
 
-fn inferred_bins(package_root: &Path, package_name: &str) -> Vec<(String, PathBuf)> {
-    let main = package_root.join("src").join("main.rs");
+fn inferred_bins(package_root: &Path, package_name: &str, ext: &str) -> Vec<(String, PathBuf)> {
+    let main = package_root.join("src").join(format!("main.{}", ext));
     let mut result = Vec::new();
     if main.exists() {
         result.push((package_name.to_string(), main));
     }
-    result.extend(infer_from_directory(&package_root.join("src").join("bin")));
+    result.extend(infer_from_directory(&package_root.join("src").join("bin"), ext));
 
     result
 }
 
-fn infer_from_directory(directory: &Path) -> Vec<(String, PathBuf)> {
+fn infer_from_directory(directory: &Path, ext: &str) -> Vec<(String, PathBuf)> {
     let entries = match fs::read_dir(directory) {
         Err(_) => return Vec::new(),
         Ok(dir) => dir,
@@ -587,15 +588,15 @@ fn infer_from_directory(directory: &Path) -> Vec<(String, PathBuf)> {
     entries
         .filter_map(|e| e.ok())
         .filter(is_not_dotfile)
-        .filter_map(|d| infer_any(&d))
+        .filter_map(|d| infer_any(&d, ext))
         .collect()
 }
 
-fn infer_any(entry: &DirEntry) -> Option<(String, PathBuf)> {
-    if entry.path().extension().and_then(|p| p.to_str()) == Some("rs") {
+fn infer_any(entry: &DirEntry, ext: &str) -> Option<(String, PathBuf)> {
+    if entry.path().extension().and_then(|p| p.to_str()) == Some(ext) {
         infer_file(entry)
     } else if entry.file_type().map(|t| t.is_dir()).ok() == Some(true) {
-        infer_subdirectory(entry)
+        infer_subdirectory(entry, ext)
     } else {
         None
     }
@@ -608,9 +609,9 @@ fn infer_file(entry: &DirEntry) -> Option<(String, PathBuf)> {
         .map(|p| (p.to_owned(), path.clone()))
 }
 
-fn infer_subdirectory(entry: &DirEntry) -> Option<(String, PathBuf)> {
+fn infer_subdirectory(entry: &DirEntry, ext: &str) -> Option<(String, PathBuf)> {
     let path = entry.path();
-    let main = path.join("main.rs");
+    let main = path.join(format!("main.{}", ext));
     let name = path.file_name().and_then(|n| n.to_str());
     match (name, main.exists()) {
         (Some(name), true) => Some((name.to_owned(), main)),

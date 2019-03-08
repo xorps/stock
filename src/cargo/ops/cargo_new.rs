@@ -175,6 +175,7 @@ fn detect_source_paths_and_types(
 ) -> CargoResult<()> {
     let path = package_path;
     let name = package_name;
+    let ext = "cpp";
 
     enum H {
         Bin,
@@ -189,27 +190,27 @@ fn detect_source_paths_and_types(
 
     let tests = vec![
         Test {
-            proposed_path: "src/main.rs".to_string(),
+            proposed_path: format!("src/main.{}", ext),
             handling: H::Bin,
         },
         Test {
-            proposed_path: "main.rs".to_string(),
+            proposed_path: format!("main.{}", ext),
             handling: H::Bin,
         },
         Test {
-            proposed_path: format!("src/{}.rs", name),
+            proposed_path: format!("src/{}.{}", name, ext),
             handling: H::Detect,
         },
         Test {
-            proposed_path: format!("{}.rs", name),
+            proposed_path: format!("{}.{}", name, ext),
             handling: H::Detect,
         },
         Test {
-            proposed_path: "src/lib.rs".to_string(),
+            proposed_path: format!("src/lib.{}", ext),
             handling: H::Lib,
         },
         Test {
-            proposed_path: "lib.rs".to_string(),
+            proposed_path: format!("lib.{}", ext),
             handling: H::Lib,
         },
     ];
@@ -238,7 +239,7 @@ fn detect_source_paths_and_types(
             },
             H::Detect => {
                 let content = paths::read(&path.join(pp.clone()))?;
-                let isbin = content.contains("fn main");
+                let isbin = content.contains("fn main") || content.contains("int main") || content.contains("void main");
                 SourceFileInformation {
                     relative_path: pp,
                     target_name: package_name.to_string(),
@@ -287,6 +288,16 @@ cannot automatically generate {} as the main target would be ambiguous",
 }
 
 fn plan_new_source_file(bin: bool, package_name: String) -> SourceFileInformation {
+    let cpp = true;
+    let filename = if bin { "main" } else { "lib" };
+    let ext = if cpp { "cpp" } else { "rs" };
+
+    SourceFileInformation {
+        relative_path: format!("src/{}.{}", filename, ext),
+        target_name: package_name,
+        bin: bin
+    }
+    /*
     if bin {
         SourceFileInformation {
             relative_path: "src/main.rs".to_string(),
@@ -300,6 +311,7 @@ fn plan_new_source_file(bin: bool, package_name: String) -> SourceFileInformatio
             bin: false,
         }
     }
+    */
 }
 
 pub fn new(opts: &NewOptions, config: &Config) -> CargoResult<()> {
@@ -307,7 +319,7 @@ pub fn new(opts: &NewOptions, config: &Config) -> CargoResult<()> {
     if fs::metadata(path).is_ok() {
         failure::bail!(
             "destination `{}` already exists\n\n\
-             Use `cargo init` to initialize the directory",
+             Use `stock init` to initialize the directory",
             path.display()
         )
     }
@@ -541,12 +553,14 @@ fn mk(config: &Config, opts: &MkOptions<'_>) -> CargoResult<()> {
     let path = opts.path;
     let name = opts.name;
     let cfg = global_config(config)?;
+    let ext = "cpp";
 
     // Using the push method with two arguments ensures that the entries for
     // both `ignore` and `hgignore` are in sync.
     let mut ignore = IgnoreList::new();
     ignore.push("/target", "^target/");
-    ignore.push("**/*.rs.bk", "glob:*.rs.bk\n");
+    // ignore.push("**/*.rs.bk", "glob:*.rs.bk\n");
+    ignore.push(&format!("**/*.{}.bk", ext), &format!("glob:*.{}.bk\n", ext));
     if !opts.bin {
         ignore.push(LOCKFILE_FILENAME, &format!("glob:{}", LOCKFILE_FILENAME));
     }
@@ -574,11 +588,9 @@ fn mk(config: &Config, opts: &MkOptions<'_>) -> CargoResult<()> {
 
     let mut cargotoml_path_specifier = String::new();
 
-    // Calculate what `[lib]` and `[[bin]]`s we need to append to `Cargo.toml`.
-
     for i in &opts.source_files {
         if i.bin {
-            if i.relative_path != "src/main.rs" {
+            if i.relative_path != format!("src/main.{}", ext) {
                 cargotoml_path_specifier.push_str(&format!(
                     r#"
 [[bin]]
@@ -589,7 +601,7 @@ path = {}
                     toml::Value::String(i.relative_path.clone())
                 ));
             }
-        } else if i.relative_path != "src/lib.rs" {
+        } else if i.relative_path != format!("src/lib.{}", ext) {
             cargotoml_path_specifier.push_str(&format!(
                 r#"
 [lib]
@@ -642,6 +654,7 @@ edition = {}
             fs::create_dir_all(src_dir)?;
         }
 
+/*
         let default_file_content: &[u8] = if i.bin {
             b"\
 fn main() {
@@ -659,6 +672,15 @@ mod tests {
 }
 "
         };
+*/
+        let default_file_content: &[u8] = b"\
+#include <cstdio>
+
+int main(int argc, const char **argv) {
+    printf(\"Hello, world!\\n\");
+    return EXIT_SUCCESS;
+}
+b";
 
         if !fs::metadata(&path_of_source_file)
             .map(|x| x.is_file())
